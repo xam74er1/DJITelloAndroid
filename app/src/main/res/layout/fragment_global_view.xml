@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".GlobalView">
+
+    <!-- SurfaceView in the background -->
+    <SurfaceView
+        android:id="@+id/surfaceView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- RelativeLayout containing TextView, Button, and JoystickView components -->
+    <RelativeLayout
+        android:id="@+id/VerticalLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/debugText"
+            android:layout_width="match_parent"
+            android:layout_height="127dp"
+            android:text="hello"
+            android:layout_alignParentTop="true"/>
+
+        <Button
+            android:id="@+id/testButton"
+            android:layout_width="248dp"
+            android:layout_height="100dp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="158dp"
+            android:layout_marginBottom="43dp"
+            android:background="@drawable/transparent_bg_bordered_button"
+            android:backgroundTint="#00B8D4"
+            android:minWidth="200dp"
+            android:minHeight="80dp"
+            android:text="Connect" />
+
+        <fr.xam74er1.trellodrone.component.JoystickView
+            android:id="@+id/joystickLeft"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="16dp"
+            android:layout_marginBottom="16dp"
+            app:borderColor="#FFF"
+            app:borderStyle="stroke"
+            app:handleColor="#F00"
+            app:handleRadius="20dp"
+            app:strokeWidth="3dp" />
+
+        <fr.xam74er1.trellodrone.component.JoystickView
+            android:id="@+id/joystickRigth"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            app:borderColor="#FFFFFF"
+            app:borderStyle="stroke"
+            app:handleColor="#4CAF50"
+            app:handleRadius="20dp"
+            app:strokeWidth="3dp" />
+
+        <ImageButton
+            android:id="@+id/record_button"
+            style="@android:style/Widget.ImageButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="1dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/transparent_bg_red_roundbordered"
+            android:src="@android:drawable/ic_media_play"
+            android:text="Button" />
+
+        <ImageButton
+            android:id="@+id/emergency_button"
+            style="@android:style/Widget.ImageButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="1dp"
+            android:layout_marginEnd="86dp"
+            android:background="@drawable/transparent_bg_red_roundbordered"
+            android:src="@android:drawable/stat_sys_download_done"
+            android:text="Button" />
+    </RelativeLayout>
+
+</FrameLayout>

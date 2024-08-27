@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="Joystick">
+        <attr name="borderColor" format="color" />
+        <attr name="handleColor" format="color" />
+        <attr name="strokeWidth" format="dimension" />
+        <attr name="borderStyle">
+            <enum name="fill" value="0" />
+            <enum name="stroke" value="1" />
+        </attr>
+        <attr name="handleRadius" format="dimension" />
+    </declare-styleable>
+</resources>
