@@ -222,7 +222,7 @@ public class GlobalView extends Fragment {
       UDPCamera camera = telloControl.getUdpCamera();
       if(telloControl.isConnected()) {
           try {
-              if (camera.isRecording()) {
+              if (camera.is_isRecording()) {
                   Log.d(TAG, "stop record");
                   camera.stopRecording();
                   recordButton.setImageResource(android.R.drawable.ic_media_play);

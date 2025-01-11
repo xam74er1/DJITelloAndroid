@@ -3,8 +3,6 @@ package fr.xam74er1.trellodrone.tellolib.camera;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.graphics.ImageFormat;
-import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
@@ -68,7 +66,7 @@ public class UDPCamera {
     // MediaMuxer for video saving
     private MediaMuxer mediaMuxer;
     private int videoTrackIndex;
-    private boolean isRecording = false;
+    private boolean _isRecording = false;
     private MediaCodec.BufferInfo bufferInfo;
 
     // BlockingQueue for frame processing
@@ -164,10 +162,10 @@ public class UDPCamera {
     private void onReceivePacket(byte[] data, int length) {
         if (length > 0) {
             frameBuffer.put(data, 0, length);
-
+            //The pqcketeg is MAX PACKET SIZE unlss it the end of the frame
             if (length < MAX_PACKET_SIZE) {
-                if (isRecording) {
-                    ByteBuffer bufferCopy = frameBuffer.asReadOnlyBuffer();
+                if (_isRecording) {
+                    ByteBuffer bufferCopy = frameBuffer.duplicate();
                     muxFrameExecutorService.submit(() -> muxFrame(bufferCopy));
                 }
 
@@ -188,6 +186,8 @@ public class UDPCamera {
         }
     }
 
+
+
     private void processFrame(byte[] data, int length) {
         int index = codec.dequeueInputBuffer(100000);
         if (index >= 0) {
@@ -201,11 +201,31 @@ public class UDPCamera {
 
         int outIndex = codec.dequeueOutputBuffer(bufferInfo, 100000);
         while (outIndex >= 0) {
-            codec.releaseOutputBuffer(outIndex, true);
+            ByteBuffer outputBuffer = codec.getOutputBuffer(outIndex);
+            MediaFormat bufferFormat = codec.getOutputFormat(outIndex); // Optionally get format
+
+            if (outputBuffer != null) {
+                // Here, we process the output buffer
+                // First, we'll extract the frame bytes
+                byte[] frameData = new byte[bufferInfo.size];
+                outputBuffer.get(frameData);
+
+                // Convert the frame bytes to a Mat
+                Mat yuvMat = new Mat(HEIGHT + HEIGHT / 2, WIDTH, CvType.CV_8UC1);
+                yuvMat.put(0, 0, frameData);
+
+                // Convert YUV to RGB (or any other desired color format)
+                Imgproc.cvtColor(yuvMat, frame, Imgproc.COLOR_YUV2RGB_I420);
+
+                //Log.d(TAG,"frame info "+frame.size());
+                // Release the YUV Mat
+                yuvMat.release();
+                //Log.d(TAG,"Format is "+surface);
+            }
+
+            codec.releaseOutputBuffer(outIndex, true); // Don't render to surface, only processing
             outIndex = codec.dequeueOutputBuffer(bufferInfo, 0);
         }
-
-
     }
 
     private void extractSPSPPS(byte[] data) {
@@ -246,21 +266,25 @@ public class UDPCamera {
     }
 
     void muxFrame(ByteBuffer buf) {
-        MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-        bufferInfo.offset = buf.arrayOffset();
-        bufferInfo.size = buf.position() - bufferInfo.offset;
-        bufferInfo.flags = (buf.get(4) & 0x1f) == 5 ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
-        bufferInfo.presentationTimeUs = computePresentationTime(frameCnt);
-
-        Log.d(TAG, "muxFrame frame: " + frameCnt + " size: " + bufferInfo.size + " NAL: " + (buf.get(4) & 0x1f) + " Flags: " + bufferInfo.flags + " PTS: " + bufferInfo.presentationTimeUs);
-
         try {
-            mediaMuxer.writeSampleData(videoTrackIndex, buf, bufferInfo);
-        } catch (Exception e) {
-            Log.w(TAG, "muxer failed", e);
-        } finally {
+            MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+            bufferInfo.offset = buf.arrayOffset();
+            bufferInfo.size = buf.position() - bufferInfo.offset;
+            bufferInfo.flags = (buf.get(4) & 0x1f) == 5 ? MediaCodec.BUFFER_FLAG_KEY_FRAME : 0;
+            bufferInfo.presentationTimeUs = computePresentationTime(frameCnt);
+
+            Log.d(TAG, "muxFrame frame: " + frameCnt + " size: " + bufferInfo.size + " NAL: " + (buf.get(4) & 0x1f) + " Flags: " + bufferInfo.flags + " PTS: " + bufferInfo.presentationTimeUs);
+
+            try {
+                mediaMuxer.writeSampleData(videoTrackIndex, buf, bufferInfo);
+                Log.d(TAG, "muxer success for track"+videoTrackIndex);
+            } catch (Exception e) {
+                Log.w(TAG, "muxer failed", e);
+            }
+            frameCnt++;
+        }catch (Exception e){
+            Log.e(TAG,"execption with"+e);
         }
-        frameCnt++;
     }
 
     private static long computePresentationTime(int frameIndex) {
@@ -268,7 +292,8 @@ public class UDPCamera {
     }
 
     public void startRecording() {
-        if (isRecording) {
+        Log.d(TAG, "startRecording");
+        if (_isRecording) {
             Log.e(TAG, "Recording is already in progress");
             return;
         }
@@ -298,13 +323,14 @@ public class UDPCamera {
             format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
 
             if (sps != null && pps != null) {
+                Log.d(TAG, "Setting SPS and PPS");
                 format.setByteBuffer("csd-0", sps);
                 format.setByteBuffer("csd-1", pps);
             }
 
             videoTrackIndex = mediaMuxer.addTrack(format);
             mediaMuxer.start();
-            isRecording = true;
+            this._isRecording = true;
             Log.d(TAG, "Started recording video to: " + videoFilePath);
 
             // Notify media scanner to add the recorded video to the Gallery
@@ -324,18 +350,22 @@ public class UDPCamera {
     }
 
     public void stopRecording() {
-        if (!isRecording) {
+        if (!_isRecording) {
             Log.e(TAG, "No recording in progress");
             return;
         }
 
         try {
-            isRecording = false;
+            _isRecording = false;
+            //sleep 1s
+            Thread.sleep(1000);
             mediaMuxer.stop();
+            Log.d(TAG, "Stopped recording A");
+            Thread.sleep(1000);
             mediaMuxer.release();
             mediaMuxer = null;
 
-            Log.d(TAG, "Stopped recording");
+            Log.d(TAG, "Stopped recording B");
         } catch (Exception e) {
             e.printStackTrace();
             Log.e(TAG, "Failed to stop recording", e);
@@ -349,7 +379,7 @@ public class UDPCamera {
             codec.release();
         }
         executorService.shutdown();
-        if (isRecording) {
+        if (_isRecording) {
             stopRecording();
         }
         stopProcessingThread();
@@ -375,11 +405,11 @@ public class UDPCamera {
         isRunning = running;
     }
 
-    public boolean isRecording() {
-        return isRecording;
+    public boolean is_isRecording() {
+        return _isRecording;
     }
 
-    public void setRecording(boolean recording) {
-        isRecording = recording;
+    public void set_isRecording(boolean _isRecording) {
+        this._isRecording = _isRecording;
     }
 }
