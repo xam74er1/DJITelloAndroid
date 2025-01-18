@@ -3,10 +3,12 @@ package fr.xam74er1.trellodrone.tellolib.camera;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.media.Image;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaMuxer;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.provider.MediaStore;
@@ -23,6 +25,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.BlockingQueue;
@@ -45,8 +48,8 @@ public class UDPCamera {
     private static final int TELLO_COMMAND_PORT = 8889;
     private static final int TELLO_VIDEO_PORT = 11111;
 
-    private static final int WIDTH = 960;
-    private static final int HEIGHT = 720;
+    public static final int WIDTH = 960;
+    public static final int HEIGHT = 720;
 
     public static final String DEFAULT_RECORDING_PATH = "DJITrelloVideo";
 
@@ -57,8 +60,6 @@ public class UDPCamera {
 
     private static UDPCamera instance = null;
 
-    // Define the frame as a class member
-    private Mat frame;
 
     // ExecutorService for background tasks
     private ExecutorService executorService;
@@ -88,7 +89,6 @@ public class UDPCamera {
         if (instance == null) {
             instance = this;
         }
-        frame = new Mat(); // Initialize the frame
         executorService = Executors.newSingleThreadExecutor(); // Initialize the executor service
         bufferInfo = new MediaCodec.BufferInfo();
         this.context = context;
@@ -201,32 +201,14 @@ public class UDPCamera {
 
         int outIndex = codec.dequeueOutputBuffer(bufferInfo, 100000);
         while (outIndex >= 0) {
-            ByteBuffer outputBuffer = codec.getOutputBuffer(outIndex);
-            MediaFormat bufferFormat = codec.getOutputFormat(outIndex); // Optionally get format
 
-            if (outputBuffer != null) {
-                // Here, we process the output buffer
-                // First, we'll extract the frame bytes
-                byte[] frameData = new byte[bufferInfo.size];
-                outputBuffer.get(frameData);
-
-                // Convert the frame bytes to a Mat
-                Mat yuvMat = new Mat(HEIGHT + HEIGHT / 2, WIDTH, CvType.CV_8UC1);
-                yuvMat.put(0, 0, frameData);
-
-                // Convert YUV to RGB (or any other desired color format)
-                Imgproc.cvtColor(yuvMat, frame, Imgproc.COLOR_YUV2RGB_I420);
-
-                //Log.d(TAG,"frame info "+frame.size());
-                // Release the YUV Mat
-                yuvMat.release();
-                //Log.d(TAG,"Format is "+surface);
-            }
 
             codec.releaseOutputBuffer(outIndex, true); // Don't render to surface, only processing
             outIndex = codec.dequeueOutputBuffer(bufferInfo, 0);
         }
     }
+
+
 
     private void extractSPSPPS(byte[] data) {
         ByteBuffer byteBuffer = ByteBuffer.wrap(data);
@@ -385,9 +367,7 @@ public class UDPCamera {
         stopProcessingThread();
     }
 
-    public synchronized Mat getFrame() {
-        return frame;
-    }
+
 
     public MediaCodec getCodec() {
         return codec;
@@ -411,5 +391,13 @@ public class UDPCamera {
 
     public void set_isRecording(boolean _isRecording) {
         this._isRecording = _isRecording;
+    }
+
+    public Surface getSurface() {
+        return surface;
+    }
+
+    public void setSurface(Surface surface) {
+        this.surface = surface;
     }
 }

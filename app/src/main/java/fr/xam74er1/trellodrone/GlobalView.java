@@ -1,5 +1,6 @@
 package fr.xam74er1.trellodrone;
 
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.ShapeDrawable;
@@ -16,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,6 +30,7 @@ import org.opencv.android.OpenCVLoader;
 import fr.xam74er1.trellodrone.Model.Drone;
 import fr.xam74er1.trellodrone.component.JoystickView;
 import fr.xam74er1.trellodrone.databinding.FragmentGlobalViewBinding;
+import fr.xam74er1.trellodrone.services.RoadFollowerServices;
 import fr.xam74er1.trellodrone.tellolib.camera.UDPCamera;
 import fr.xam74er1.trellodrone.tellolib.exception.TelloConnectionException;
 
@@ -49,7 +52,13 @@ public class GlobalView extends Fragment {
     private Button buttonLandFly;
     private ImageButton recordButton;
 
+    private ImageButton serviceButton;
+
     TextView debugText;
+
+    private RoadFollowerServices roadFollowerServices;
+
+    private ImageView opencvImage;
 
 
     public GlobalView() {
@@ -89,7 +98,9 @@ public class GlobalView extends Fragment {
         buttonLandFly = binding.testButton;
         ImageButton emergencyButton = binding.emergencyButton;
         recordButton = binding.recordButton;
-         debugText = binding.debugText;
+        opencvImage = binding.imageView;
+        debugText = binding.debugText;
+        serviceButton = binding.serviceButton;
         this.joystickRigth = binding.joystickRigth;
         this.joystickLeft = binding.joystickLeft;
 
@@ -124,6 +135,10 @@ public class GlobalView extends Fragment {
 
         recordButton.setOnClickListener(view1 -> {
             onRecord();
+        });
+
+        serviceButton.setOnClickListener(view1 -> {
+            onService();
         });
         //startConnectionThread();
     }
@@ -243,6 +258,44 @@ public class GlobalView extends Fragment {
           Toast.makeText(getActivity(), "You need to be connected!", Toast.LENGTH_SHORT).show();
       }
     }
+
+
+    private void onService() {
+    Log.i(TAG, "Service button clicked");
+
+    if (roadFollowerServices == null) {
+        roadFollowerServices = RoadFollowerServices.getInstance();
+        roadFollowerServices.setListener(mat -> {
+            // Convert mat to bitmap
+            Log.d(TAG, "In callback mat is " + mat);
+            if(mat.cols()>0 || mat.rows() >0) {
+                Bitmap bitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+                org.opencv.android.Utils.matToBitmap(mat, bitmap);
+
+                // Update the ImageView on the main thread
+                getActivity().runOnUiThread(() -> opencvImage.setImageBitmap(bitmap));
+            }else{
+                Log.e(TAG,"Error in the mat "+mat);
+            }
+        });
+    }
+    if (roadFollowerServices.isRunning()) {
+        // Show the SurfaceView
+        // surfaceView.setVisibility(View.VISIBLE);
+        opencvImage.setVisibility(View.GONE);
+        roadFollowerServices.stop();
+        Toast.makeText(getActivity(), "Service stopped", Toast.LENGTH_SHORT).show();
+    } else {
+        // Hide the SurfaceView
+        // surfaceView.setVisibility(View.GONE);
+        opencvImage.setVisibility(View.VISIBLE);
+        roadFollowerServices.start();
+        Toast.makeText(getActivity(), "Service started", Toast.LENGTH_SHORT).show();
+    }
+}
+
+
+
 
     @Override
     public void onDestroy() {

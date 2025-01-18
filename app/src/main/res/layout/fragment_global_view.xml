@@ -19,12 +19,21 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="500dp"
+            android:layout_height="300dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:background="#000"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/debugText"
             android:layout_width="match_parent"
             android:layout_height="127dp"
-            android:text="hello"
-            android:layout_alignParentTop="true"/>
+            android:layout_alignParentTop="true"
+            android:text="hello" />
 
         <Button
             android:id="@+id/testButton"
@@ -78,6 +87,18 @@
             android:layout_marginEnd="16dp"
             android:background="@drawable/transparent_bg_red_roundbordered"
             android:src="@android:drawable/ic_media_play"
+            android:text="Button" />
+
+        <ImageButton
+            android:id="@+id/service_button"
+            style="@android:style/Widget.ImageButton"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="1dp"
+            android:layout_marginEnd="658dp"
+            android:background="@drawable/transparent_bg_bordered"
+            android:src="@android:drawable/ic_menu_compass"
             android:text="Button" />
 
         <ImageButton
