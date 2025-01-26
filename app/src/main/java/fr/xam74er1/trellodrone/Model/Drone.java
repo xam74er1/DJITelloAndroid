@@ -183,4 +183,11 @@ public class Drone extends TelloControl {
     public void setSurface(Surface surface) {
         this.surface = surface;
     }
+
+    public void setControll(float upDown, float rightLeft, float forwardBackward, float yaw){
+        this.upDown = upDown;
+        this.rightLeft = rightLeft;
+        this.forwardBackward = forwardBackward;
+        this.yaw = yaw;
+    }
 }

@@ -32,6 +32,8 @@ public class GenericServices implements Runnable{
     protected int WIDTH = UDPCamera.WIDTH;
     protected Bitmap lastImage = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
 
+    protected boolean canTakeDesicion = false;
+
     public GenericServices() {
         running = false;
         this.telloControl = Drone.getInstance();
@@ -46,6 +48,7 @@ public class GenericServices implements Runnable{
         thread = new Thread(this);
         thread.setDaemon(true);
         thread.start();
+        canTakeDesicion=false;
     }
 
     public synchronized void stop() {
@@ -53,6 +56,7 @@ public class GenericServices implements Runnable{
             return;
         }
         running = false;
+        canTakeDesicion = false;
         try {
             thread.join();
         } catch (InterruptedException e) {
@@ -99,6 +103,22 @@ public class GenericServices implements Runnable{
 
     public boolean isRunning() {
         return running;
+    }
+
+    public void setCanTakeDesicion(boolean canTakeDesicion) {
+        this.canTakeDesicion = canTakeDesicion;
+    }
+
+    public boolean canTakeDesicion() {
+        return canTakeDesicion;
+    }
+
+    public void takeControl() {
+        setCanTakeDesicion(true);
+    }
+
+    public void releaseControl() {
+        setCanTakeDesicion(false);
     }
 }
 

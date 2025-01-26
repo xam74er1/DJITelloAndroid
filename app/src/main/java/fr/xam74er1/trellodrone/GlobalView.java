@@ -18,6 +18,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,6 +61,10 @@ public class GlobalView extends Fragment {
 
     private ImageView opencvImage;
 
+    private Button btTakeControll;
+
+    private LinearLayout serviceManagement;
+
 
     public GlobalView() {
         this.telloControl = Drone.getInstance();
@@ -101,6 +106,8 @@ public class GlobalView extends Fragment {
         opencvImage = binding.imageView;
         debugText = binding.debugText;
         serviceButton = binding.serviceButton;
+        serviceManagement = binding.serviceManagement;
+        btTakeControll = binding.btTakeControll;
         this.joystickRigth = binding.joystickRigth;
         this.joystickLeft = binding.joystickLeft;
 
@@ -140,7 +147,31 @@ public class GlobalView extends Fragment {
         serviceButton.setOnClickListener(view1 -> {
             onService();
         });
+
+        btTakeControll.setOnClickListener(view1 -> {
+            onTakeControlle();
+        });
         //startConnectionThread();
+    }
+
+    private void onTakeControlle() {
+        int color = Color.RED;
+        if(roadFollowerServices.canTakeDesicion()){
+            roadFollowerServices.releaseControl();
+            btTakeControll.setText("Take control");
+            color = Color.BLUE;
+        }else{
+            roadFollowerServices.takeControl();
+            btTakeControll.setText("Release control");
+        }
+
+
+        ShapeDrawable shapedrawable = new ShapeDrawable();
+        shapedrawable.setShape(new RectShape());
+        shapedrawable.getPaint().setColor(color);
+        shapedrawable.getPaint().setStrokeWidth(10f);
+        shapedrawable.getPaint().setStyle(Paint.Style.STROKE);
+        btTakeControll.setBackground(shapedrawable);
     }
 
     private void startConnectionThread() {
@@ -282,13 +313,13 @@ public class GlobalView extends Fragment {
     if (roadFollowerServices.isRunning()) {
         // Show the SurfaceView
         // surfaceView.setVisibility(View.VISIBLE);
-        opencvImage.setVisibility(View.GONE);
+        serviceManagement.setVisibility(View.GONE);
         roadFollowerServices.stop();
         Toast.makeText(getActivity(), "Service stopped", Toast.LENGTH_SHORT).show();
     } else {
         // Hide the SurfaceView
         // surfaceView.setVisibility(View.GONE);
-        opencvImage.setVisibility(View.VISIBLE);
+        serviceManagement.setVisibility(View.VISIBLE);
         roadFollowerServices.start();
         Toast.makeText(getActivity(), "Service started", Toast.LENGTH_SHORT).show();
     }
